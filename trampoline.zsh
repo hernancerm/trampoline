@@ -1,24 +1,24 @@
 # Do not source this script multiple times.
-command -v zt_version > /dev/null && return
+command -v tr_version > /dev/null && return
 
 # CONFIGURATION
 
 ## Get the version.
-function zt_version {
+function tr_version {
   echo '0.1.1-dev'
 }
 
 # Set by trampoline.plugin.zsh. The fallback covers sourcing this file directly.
-ZT_PATH="${ZT_PATH:-${${(%):-%x}:A:h}}"
-ZT_PREFIX="${ZT_PREFIX:-^t}"
-ZT_SET_KEYBINDS="${ZT_SET_KEYBINDS:-1}"
+TR_PATH="${TR_PATH:-${${(%):-%x}:A:h}}"
+TR_PREFIX="${TR_PREFIX:-^t}"
+TR_SET_KEYBINDS="${TR_SET_KEYBINDS:-1}"
 
 # WIDGET
 
 # The listing, fzf and quoting live in the core, shared with the PowerShell layer.
-function zt-jump {
+function tr-jump {
   local cmd
-  cmd="$(bb "${ZT_PATH}/core/trampoline.clj" pick --shell zsh)"
+  cmd="$(bb "${TR_PATH}/core/trampoline.clj" pick --shell zsh)"
   if [[ $? -ne 0 ]]; then
     # The core printed the error to stderr. Accept the line so the error stays visible above it.
     zle .accept-line
@@ -33,10 +33,10 @@ function zt-jump {
   zle .accept-line
 }
 
-zle -N zt-jump
+zle -N tr-jump
 
 # Set keybinds.
 
-if [[ ZT_SET_KEYBINDS -eq 1 ]]; then
-  bindkey "${ZT_PREFIX}" zt-jump
+if [[ TR_SET_KEYBINDS -eq 1 ]]; then
+  bindkey "${TR_PREFIX}" tr-jump
 fi

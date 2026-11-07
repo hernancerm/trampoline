@@ -1,13 +1,13 @@
-# PowerShell layer of zsh-trampoline. Dot-source it from $PROFILE:
-#   . ~/dev/repos/zsh-trampoline/pwsh/trampoline.ps1
-# Set $ZT_SET_KEYBINDS = 0 before dot-sourcing to bind Invoke-ZtJump yourself, and $ZT_PREFIX to
+# PowerShell layer of trampoline. Dot-source it from $PROFILE:
+#   . ~/dev/repos/trampoline/pwsh/trampoline.ps1
+# Set $TR_SET_KEYBINDS = 0 before dot-sourcing to bind Invoke-TrJump yourself, and $TR_PREFIX to
 # change the key (PSReadLine chord syntax, see `Get-Help Set-PSReadLineKeyHandler`).
 
-$script:ZtCore = Join-Path $PSScriptRoot '../core/trampoline.clj'
+$script:TrCore = Join-Path $PSScriptRoot '../core/trampoline.clj'
 
 # The listing, fzf and quoting live in the core, shared with the zsh layer.
-function Invoke-ZtJump {
-  $cmd = bb $script:ZtCore pick --shell pwsh
+function Invoke-TrJump {
+  $cmd = bb $script:TrCore pick --shell pwsh
   if ($LASTEXITCODE -ne 0 -or -not $cmd) {
     # On error the core printed it to stderr. Redraw the prompt below it.
     [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
@@ -18,9 +18,9 @@ function Invoke-ZtJump {
   [Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine()
 }
 
-if ($null -eq $ZT_PREFIX) {
-  $ZT_PREFIX = 'Ctrl+t'
+if ($null -eq $TR_PREFIX) {
+  $TR_PREFIX = 'Ctrl+t'
 }
-if ($ZT_SET_KEYBINDS -ne 0) {
-  Set-PSReadLineKeyHandler -Chord $ZT_PREFIX -ScriptBlock { Invoke-ZtJump }
+if ($TR_SET_KEYBINDS -ne 0) {
+  Set-PSReadLineKeyHandler -Chord $TR_PREFIX -ScriptBlock { Invoke-TrJump }
 }

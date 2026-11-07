@@ -1,10 +1,11 @@
 #!/usr/bin/env bb
 
-;; Shell-independent core of zsh-trampoline. The shell layers (trampoline.zsh, pwsh/trampoline.ps1)
+;; Shell-independent core of trampoline. The shell layers (trampoline.zsh, pwsh/trampoline.ps1)
 ;; only bind a key, run this script and execute the command it prints.
 ;;
 ;; Usage:
-;;   bb trampoline.clj items                 Print the configured items, one per line.
+;;   bb trampoline.clj items [--type <d|f>]  Print the configured items, one per line, optionally
+;;                                           only the directories (d) or the files (f).
 ;;   bb trampoline.clj pick --shell <shell>  Pick an item in fzf and print the command to run it,
 ;;                                           quoted for <shell>: zsh or pwsh. Prints nothing when
 ;;                                           the pick is cancelled.
@@ -24,7 +25,7 @@
   (or (System/getenv "HOME") (str (fs/home))))
 
 (def config-files #_[:- [:vector :string]]
-  [(str (fs/path home ".zt")) (str (fs/path home ".zt.local"))])
+  [(str (fs/path home ".trampoline")) (str (fs/path home ".trampoline.local"))])
 
 (defn expand
   "Expands a leading `~` and the environment variables `$VAR` and `${VAR}`."
@@ -115,12 +116,19 @@
   (System/exit 1))
 
 (when (= *file* (System/getProperty "babashka.file"))
-  (let [[cmd flag shell] *command-line-args*]
+  (let [[cmd flag value] *command-line-args*]
     (when-not (some fs/regular-file? config-files)
-      (error "No config file found for zsh-trampoline, no ~/.zt or ~/.zt.local"))
+      (error "No config file found for trampoline, no ~/.trampoline or ~/.trampoline.local"))
     (case cmd
-      "items" (run! (comp println first) (items))
-      "pick" (if (and (= flag "--shell") (#{"zsh" "pwsh"} shell))
-               (pick shell)
+      "items" (cond
+                (nil? flag) (run! (comp println first) (items))
+                (and (= flag "--type") (#{"d" "f"} value))
+                (run! (comp println first)
+                      (filter (fn [[_ path]]
+                                (= (= value "d") (fs/directory? path)))
+                              (items)))
+                :else (error "Usage: trampoline.clj items [--type <d|f>]"))
+      "pick" (if (and (= flag "--shell") (#{"zsh" "pwsh"} value))
+               (pick value)
                (error "Usage: trampoline.clj pick --shell <zsh|pwsh>"))
       (error "Usage: trampoline.clj <items|pick>"))))

@@ -2,5 +2,5 @@
 0="${ZERO:-${${0:#$ZSH_ARGZERO}:-${(%):-%N}}}"
 0="${${(M)0:#/*}:-$PWD/$0}"
 
-ZT_PATH="${0:h}"
-source ${ZT_PATH}/trampoline.zsh
+TR_PATH="${0:h}"
+source ${TR_PATH}/trampoline.zsh

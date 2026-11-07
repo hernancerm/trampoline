@@ -1,4 +1,4 @@
-# zsh-trampoline
+# trampoline
 
 zsh (or PowerShell) + [fzf](https://github.com/junegunn/fzf) for filesystem navigation.
 
@@ -20,11 +20,11 @@ After sourcing the plugin this keybind is set:
 1. Install [fzf](https://github.com/junegunn/fzf) and [babashka](https://babashka.org/)
    (`bb`).
 
-2. Clone the zsh-trampoline repository by executing the below command:
+2. Clone the trampoline repository by executing the below command:
 
     ```bash
-    git clone 'https://github.com/hernancerm/zsh-trampoline.git' \
-      "${HOME}/.zsh-trampoline/zsh-trampoline"
+    git clone 'https://github.com/hernancerm/trampoline.git' \
+      "${HOME}/.local/share/trampoline"
     ```
 
 #### Zsh
@@ -32,25 +32,25 @@ After sourcing the plugin this keybind is set:
 3. Source the plugin (also add command to your `~/.zshrc` to enable on future sessions):
 
     ```bash
-    source "${HOME}/.zsh-trampoline/zsh-trampoline/trampoline.plugin.zsh"
+    source "${HOME}/.local/share/trampoline/trampoline.plugin.zsh"
     ```
 
     OR: If you want to set a custom keybind then use:
 
     ```bash
-    ZT_SET_KEYBINDS=0
-    source "${HOME}/.zsh-trampoline/zsh-trampoline/trampoline.plugin.zsh"
-    bindkey "^t" zt-jump
+    TR_SET_KEYBINDS=0
+    source "${HOME}/.local/share/trampoline/trampoline.plugin.zsh"
+    bindkey "^t" tr-jump
     ```
 
     OR: If you use [jeffreytse/zsh-vi-mode](https://github.com/jeffreytse/zsh-vi-mode):
 
     ```bash
-    ZT_SET_KEYBINDS=0
-    source "${HOME}/.zsh-trampoline/zsh-trampoline/trampoline.plugin.zsh"
+    TR_SET_KEYBINDS=0
+    source "${HOME}/.local/share/trampoline/trampoline.plugin.zsh"
     function zvm_after_init {
-      zvm_define_widget zt-jump
-      zvm_bindkey viins "^t" zt-jump
+      zvm_define_widget tr-jump
+      zvm_bindkey viins "^t" tr-jump
     }
     ```
 
@@ -59,15 +59,15 @@ After sourcing the plugin this keybind is set:
 3. Source the PowerShell layer from `$PROFILE`:
 
     ```powershell
-    . "${HOME}/.zsh-trampoline/zsh-trampoline/pwsh/trampoline.ps1"
+    . "${HOME}/.local/share/trampoline/pwsh/trampoline.ps1"
     ```
     
     OR: If you want to set a custom keybind then use:
     
     ```powershell
-    $ZT_SET_KEYBINDS = 0
-    . "${HOME}/.zsh-trampoline/zsh-trampoline/pwsh/trampoline.ps1"
-    Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock { Invoke-ZtJump }
+    $TR_SET_KEYBINDS = 0
+    . "${HOME}/.local/share/trampoline/pwsh/trampoline.ps1"
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock { Invoke-TrJump }
     ```
 
 ### With a plugin manager
@@ -77,8 +77,8 @@ After sourcing the plugin this keybind is set:
 With [Sheldon](https://github.com/rossmacarthur/sheldon):
 
 ```toml
-[plugins.zsh-trampoline]
-github = "hernancerm/zsh-trampoline"
+[plugins.trampoline]
+github = "hernancerm/trampoline"
 
 # File: ~/.config/sheldon/plugins.toml
 ```
@@ -92,10 +92,10 @@ eval "$(sheldon source)"
 
 ## Configuration file
 
-zsh-trampoline supports two config files:
+trampoline supports two config files:
 
-1. `~/.zt`
-2. `~/.zt.local` (for what you don't want to commit to source control.)
+1. `~/.trampoline`
+2. `~/.trampoline.local` (for what you don't want to commit to source control.)
 
 The configs are merged in order, no overrides. I recommend using the first config file for
 common dirs/files in your setup, while the second config file for sensitive or
