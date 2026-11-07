@@ -15,11 +15,10 @@ After sourcing the plugin this keybind is set:
 
 ## Installation
 
-### Zsh without a plugin manager
+### Without a plugin manager
 
 1. Install [fzf](https://github.com/junegunn/fzf) and [babashka](https://babashka.org/)
-   (`bb`). Both shells run the same core, `core/trampoline.clj`, which lists the items,
-   runs fzf and prints the command to run.
+   (`bb`).
 
 2. Clone the zsh-trampoline repository by executing the below command:
 
@@ -27,6 +26,8 @@ After sourcing the plugin this keybind is set:
     git clone 'https://github.com/hernancerm/zsh-trampoline.git' \
       "${HOME}/.zsh-trampoline/zsh-trampoline"
     ```
+
+#### Zsh
 
 3. Source the plugin (also add command to your `~/.zshrc` to enable on future sessions):
 
@@ -53,23 +54,25 @@ After sourcing the plugin this keybind is set:
     }
     ```
 
-### PowerShell without a plugin manager
+#### PowerShell
 
-Install as above, then dot-source the PowerShell layer from `$PROFILE`:
+3. Source the PowerShell layer from `$PROFILE`:
 
-```powershell
-. "${HOME}/.zsh-trampoline/zsh-trampoline/pwsh/trampoline.ps1"
-```
+    ```powershell
+    . "${HOME}/.zsh-trampoline/zsh-trampoline/pwsh/trampoline.ps1"
+    ```
+    
+    OR: If you want to set a custom keybind then use:
+    
+    ```powershell
+    $ZT_SET_KEYBINDS = 0
+    . "${HOME}/.zsh-trampoline/zsh-trampoline/pwsh/trampoline.ps1"
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock { Invoke-ZtJump }
+    ```
 
-OR: If you want to set a custom keybind then use:
+### With a plugin manager
 
-```powershell
-$ZT_SET_KEYBINDS = 0
-. "${HOME}/.zsh-trampoline/zsh-trampoline/pwsh/trampoline.ps1"
-Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock { Invoke-ZtJump }
-```
-
-### Zsh with a plugin manager
+#### Zsh
 
 With [Sheldon](https://github.com/rossmacarthur/sheldon):
 
