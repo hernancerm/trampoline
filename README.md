@@ -120,7 +120,7 @@ Explanation of the config file's syntax:
   sub-dirs.
 - Only a trailing `:0` is read as the suffix, so paths may contain a colon (`C:\Users`).
 - The tilde (`~`) character is expanded to the user home directory.
-- Environment variables are supported, as `$VAR` or `${VAR}`. Only exported ones are seen.
+- Exported env variables are supported, as `$VAR` or `${VAR}`.
 
 ## Similar projects
 
