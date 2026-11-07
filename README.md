@@ -1,10 +1,10 @@
 # zsh-trampoline
 
-zsh + [fzf](https://github.com/junegunn/fzf) for filesystem navigation.
+zsh (or PowerShell) + [fzf](https://github.com/junegunn/fzf) for filesystem navigation.
 
 ## What is this?
 
-This is a zsh plugin to facilitate two use cases:
+This is a zsh and PowerShell plugin to facilitate two use cases:
 
 1. `cd` to commonly visited directories.
 2. Open in `$EDITOR` commonly visited files.
@@ -15,9 +15,11 @@ After sourcing the plugin this keybind is set:
 
 ## Installation
 
-### Without a plugin manager
+### Zsh without a plugin manager
 
-1. Install [fzf](https://github.com/junegunn/fzf).
+1. Install [fzf](https://github.com/junegunn/fzf) and [babashka](https://babashka.org/)
+   (`bb`). Both shells run the same core, `core/trampoline.clj`, which lists the items,
+   runs fzf and prints the command to run.
 
 2. Clone the zsh-trampoline repository by executing the below command:
 
@@ -51,7 +53,23 @@ After sourcing the plugin this keybind is set:
     }
     ```
 
-### With a plugin manager
+### PowerShell without a plugin manager
+
+Install as above, then dot-source the PowerShell layer from `$PROFILE`:
+
+```powershell
+. "${HOME}/.zsh-trampoline/zsh-trampoline/pwsh/trampoline.ps1"
+```
+
+OR: If you want to set a custom keybind then use:
+
+```powershell
+$ZT_SET_KEYBINDS = 0
+. "${HOME}/.zsh-trampoline/zsh-trampoline/pwsh/trampoline.ps1"
+Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock { Invoke-ZtJump }
+```
+
+### Zsh with a plugin manager
 
 With [Sheldon](https://github.com/rossmacarthur/sheldon):
 
@@ -97,9 +115,9 @@ Explanation of the config file's syntax:
 - By default, directories are expanded to their level-1 sub-dirs.
 - Directories may be suffixed with `:0` to list the dir itself instead of its level-1
   sub-dirs.
-- Paths containing a colon (`:`) character are not supported.
+- Only a trailing `:0` is read as the suffix, so paths may contain a colon (`C:\Users`).
 - The tilde (`~`) character is expanded to the user home directory.
-- Environment variables are supported.
+- Environment variables are supported, as `$VAR` or `${VAR}`. Only exported ones are seen.
 
 ## Similar projects
 
