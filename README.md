@@ -141,7 +141,8 @@ plugin:
 - Zsh: `TR_CMD=(bb ~/dev/repos/trampoline/src/trampoline/core.clj)`
 - PowerShell: `$TR_CMD = 'bb', "$HOME/dev/repos/trampoline/src/trampoline/core.clj"`
 
-The core must run on both bb and the JVM. Build the binary with `bb bin`.
+The core must run on both bb and the JVM. `bb test` runs the tests on both. Build the
+binary with `bb bin`.
 
 ## Similar projects
 

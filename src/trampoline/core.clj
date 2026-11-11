@@ -75,19 +75,21 @@
        (sort-by (juxt #(str/lower-case (str/replace % #"[^\p{Alnum}]" "")) identity))))
 
 (defn items
-  #_[:=> [:cat] [:sequential Item]]
-  []
-  (for [line (config-lines)
-        ;; Only a trailing `:0` is the suffix, so a Windows drive (`C:\`) is not taken for one.
-        :let [no-expand (str/ends-with? line ":0")
-              raw (cond-> line no-expand (subs 0 (- (count line) 2)))
-              path (str (fs/normalize (expand raw)))]
-        item (cond
-               (fs/regular-file? path) [[(shorten raw) path]]
-               (and (fs/directory? path) no-expand) [[(shorten raw) path]]
-               (fs/directory? path) (map (fn [d] [(shorten d) d]) (sub-dirs path))
-               :else [])]
-    item))
+  "Items of the config `lines`, by default those of the config files."
+  #_[:function [:=> [:cat] [:sequential Item]] [:=> [:cat [:sequential :string]] [:sequential Item]]]
+  ([] (items (config-lines)))
+  ([lines]
+   (for [line lines
+         ;; Only a trailing `:0` is the suffix, so a Windows drive (`C:\`) is not taken for one.
+         :let [no-expand (str/ends-with? line ":0")
+               raw (cond-> line no-expand (subs 0 (- (count line) 2)))
+               path (str (fs/normalize (expand raw)))]
+         item (cond
+                (fs/regular-file? path) [[(shorten raw) path]]
+                (and (fs/directory? path) no-expand) [[(shorten raw) path]]
+                (fs/directory? path) (map (fn [d] [(shorten d) d]) (sub-dirs path))
+                :else [])]
+     item)))
 
 (defn quote-zsh
   #_[:=> [:cat :string] :string]
