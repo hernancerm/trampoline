@@ -15,21 +15,45 @@ After sourcing the plugin this keybind is set:
 
 ## Installation
 
-### Without a plugin manager
+First, install [fzf](https://github.com/junegunn/fzf) and the `trampoline` binary. With
+[mise](https://mise.jdx.dev/):
 
-1. Install [fzf](https://github.com/junegunn/fzf) and [babashka](https://babashka.org/)
-   (`bb`).
+```bash
+mise use -g github:hernancerm/trampoline
+```
 
-2. Clone the trampoline repository by executing the below command:
+OR: Download it from [releases](https://github.com/hernancerm/trampoline/releases) and add
+to `$PATH`.
+
+### Zsh
+
+With [Sheldon](https://github.com/rossmacarthur/sheldon) (Zsh plugin manager):
+
+```toml
+[plugins.trampoline]
+github = "hernancerm/trampoline"
+
+# File: ~/.config/sheldon/plugins.toml
+```
+
+```bash
+# Source plugins.
+eval "$(sheldon source)"
+
+# File: ~/.zshrc
+```
+
+Alternatively, if not using Sheldon:
+
+1. Clone the trampoline repository by executing the below command:
 
     ```bash
     git clone 'https://github.com/hernancerm/trampoline.git' \
       "${HOME}/.local/share/trampoline"
     ```
 
-#### Zsh
-
-3. Source the plugin (also add command to your `~/.zshrc` to enable on future sessions):
+2. Source the plugin (also add the command to your `~/.zshrc` to enable on future
+   sessions):
 
     ```bash
     source "${HOME}/.local/share/trampoline/trampoline.plugin.zsh"
@@ -54,41 +78,27 @@ After sourcing the plugin this keybind is set:
     }
     ```
 
-#### PowerShell
+### PowerShell
 
-3. Source the PowerShell layer from `$PROFILE`:
+1. Clone the trampoline repository by executing the below command:
+
+    ```powershell
+    git clone 'https://github.com/hernancerm/trampoline.git' "${HOME}/.local/share/trampoline"
+    ```
+
+2. Source the PowerShell layer from `$PROFILE`:
 
     ```powershell
     . "${HOME}/.local/share/trampoline/pwsh/trampoline.ps1"
     ```
-    
+
     OR: If you want to set a custom keybind then use:
-    
+
     ```powershell
     $TR_SET_KEYBINDS = 0
     . "${HOME}/.local/share/trampoline/pwsh/trampoline.ps1"
     Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock { Invoke-TrJump }
     ```
-
-### With a plugin manager
-
-#### Zsh
-
-With [Sheldon](https://github.com/rossmacarthur/sheldon):
-
-```toml
-[plugins.trampoline]
-github = "hernancerm/trampoline"
-
-# File: ~/.config/sheldon/plugins.toml
-```
-
-```bash
-# Source plugins.
-eval "$(sheldon source)"
-
-# File: ~/.zshrc
-```
 
 ## Configuration file
 
@@ -121,6 +131,17 @@ Explanation of the config file's syntax:
 - Only a trailing `:0` is read as the suffix, so paths may contain a colon (`C:\Users`).
 - The tilde (`~`) character is expanded to the user home directory.
 - Exported env variables are supported, as `$VAR` or `${VAR}`.
+
+## Development
+
+To run [src/trampoline/core.clj](/src/trampoline/core.clj) from source with
+[babashka](https://babashka.org/) instead of the binary, set this before sourcing the
+plugin:
+
+- Zsh: `TR_CMD=(bb ~/dev/repos/trampoline/src/trampoline/core.clj)`
+- PowerShell: `$TR_CMD = 'bb', "$HOME/dev/repos/trampoline/src/trampoline/core.clj"`
+
+The core must run on both bb and the JVM. Build the binary with `bb bin`.
 
 ## Similar projects
 

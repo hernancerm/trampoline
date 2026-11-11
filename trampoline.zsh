@@ -8,17 +8,20 @@ function tr_version {
   echo '0.1.1-dev'
 }
 
-# Set by trampoline.plugin.zsh. The fallback covers sourcing this file directly.
-TR_PATH="${TR_PATH:-${${(%):-%x}:A:h}}"
 TR_PREFIX="${TR_PREFIX:-^t}"
 TR_SET_KEYBINDS="${TR_SET_KEYBINDS:-1}"
+# Command running the core. Set it to run from source with bb, e.g.:
+#   TR_CMD=(bb ~/dev/repos/trampoline/src/trampoline/core.clj)
+if (( ! ${+TR_CMD} )); then
+  TR_CMD=(trampoline)
+fi
 
 # WIDGET
 
 # The listing, fzf and quoting live in the core, shared with the PowerShell layer.
 function tr-jump {
   local cmd
-  cmd="$(bb "${TR_PATH}/core/trampoline.clj" pick --shell zsh)"
+  cmd="$("${TR_CMD[@]}" pick --shell zsh)"
   if [[ $? -ne 0 ]]; then
     # The core printed the error to stderr. Accept the line so the error stays visible above it.
     zle .accept-line

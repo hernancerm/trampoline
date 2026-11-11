@@ -1,0 +1,10 @@
+;; Build tasks. `bb clojure` is a port of the Clojure CLI, so the build also runs on Windows.
+{:tasks
+ {uber {:doc "Build target/trampoline.jar"
+        :task (clojure "-T:build uber")}
+  bin {:doc "Build the native binary target/trampoline (trampoline.exe on Windows)"
+       :depends [uber]
+       ;; The feature initializes the Clojure classes at build time, see
+       ;; <https://github.com/clj-easy/graal-build-time>.
+       :task (shell "native-image -jar target/trampoline.jar -o target/trampoline --no-fallback"
+                    "--features=clj_easy.graal_build_time.InitClojureClasses")}}}

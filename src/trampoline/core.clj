@@ -1,18 +1,24 @@
 #!/usr/bin/env bb
 
 ;; Shell-independent core of trampoline. The shell layers (trampoline.zsh, pwsh/trampoline.ps1)
-;; only bind a key, run this script and execute the command it prints.
+;; only bind a key, run the `trampoline` binary and execute the command it prints. In development,
+;; run this file with bb instead (`bb src/trampoline/core.clj <args>`), it takes the same args.
 ;;
 ;; Usage:
-;;   bb trampoline.clj items [--type <d|f>]  Print the configured items, one per line, optionally
-;;                                           only the directories (d) or the files (f).
-;;   bb trampoline.clj pick --shell <shell>  Pick an item in fzf and print the command to run it,
-;;                                           quoted for <shell>: zsh or pwsh. Prints nothing when
-;;                                           the pick is cancelled.
+;;   trampoline items [--type <d|f>]  Print the configured items, one per line, optionally only the
+;;                                    directories (d) or the files (f).
+;;   trampoline pick --shell <shell>  Pick an item in fzf and print the command to run it, quoted
+;;                                    for <shell>: zsh or pwsh. Prints nothing when the pick is
+;;                                    cancelled.
 
-(require '[babashka.fs :as fs]
-         '[babashka.process :as p]
-         '[clojure.string :as str])
+(ns trampoline.core
+  (:require [babashka.fs :as fs]
+            [babashka.process :as p]
+            [clojure.string :as str])
+  (:gen-class))
+
+;; Native Image cannot resolve reflective calls at run time.
+(set! *warn-on-reflection* true)
 
 #_[:type Shell [:enum "zsh" "pwsh"]]
 
@@ -20,19 +26,24 @@
 ;; `path` is the expanded filepath.
 #_[:type Item [:tuple :string :string]]
 
-;; `$HOME` first, as the shells use it for `~`. Java's home (`fs/home`) ignores it.
-(def home #_[:- :string]
+;; `$HOME` first, as the shells use it for `~`. Java's home (`fs/home`) ignores it. A function, not a
+;; `def`, as the binary runs the `def`s at build time and would keep the build machine's `$HOME`.
+(defn home
+  #_[:=> [:cat] :string]
+  []
   (or (System/getenv "HOME") (str (fs/home))))
 
-(def config-files #_[:- [:vector :string]]
-  [(str (fs/path home ".trampoline")) (str (fs/path home ".trampoline.local"))])
+(defn config-files
+  #_[:=> [:cat] [:vector :string]]
+  []
+  [(str (fs/path (home) ".trampoline")) (str (fs/path (home) ".trampoline.local"))])
 
 (defn expand
   "Expands a leading `~` and the environment variables `$VAR` and `${VAR}`."
   #_[:=> [:cat :string] :string]
   [s]
   (-> s
-      (str/replace #"^~(?=$|[/\\])" (str/re-quote-replacement home))
+      (str/replace #"^~(?=$|[/\\])" (str/re-quote-replacement (home)))
       (str/replace #"\$\{(\w+)\}|\$(\w+)"
                    (fn [[_ braced bare]]
                      (str/re-quote-replacement (or (System/getenv (or braced bare)) ""))))))
@@ -41,14 +52,14 @@
   "Replaces the home directory prefix with `~`, for display."
   #_[:=> [:cat :string] :string]
   [s]
-  (if (str/starts-with? s home)
-    (str "~" (subs s (count home)))
+  (if (str/starts-with? s (home))
+    (str "~" (subs s (count (home))))
     s))
 
 (defn config-lines
   #_[:=> [:cat] [:sequential :string]]
   []
-  (->> config-files
+  (->> (config-files)
        (filter fs/regular-file?)
        (mapcat fs/read-all-lines)
        (remove str/blank?)))
@@ -115,9 +126,9 @@
     (println (str "ERROR: " msg)))
   (System/exit 1))
 
-(when (= *file* (System/getProperty "babashka.file"))
-  (let [[cmd flag value] *command-line-args*]
-    (when-not (some fs/regular-file? config-files)
+(defn -main [& argv]
+  (let [[cmd flag value] argv]
+    (when-not (some fs/regular-file? (config-files))
       (error "No config file found for trampoline, no ~/.trampoline or ~/.trampoline.local"))
     (case cmd
       "items" (cond
@@ -127,8 +138,15 @@
                       (filter (fn [[_ path]]
                                 (= (= value "d") (fs/directory? path)))
                               (items)))
-                :else (error "Usage: trampoline.clj items [--type <d|f>]"))
+                :else (error "Usage: trampoline items [--type <d|f>]"))
       "pick" (if (and (= flag "--shell") (#{"zsh" "pwsh"} value))
                (pick value)
-               (error "Usage: trampoline.clj pick --shell <zsh|pwsh>"))
-      (error "Usage: trampoline.clj <items|pick>"))))
+               (error "Usage: trampoline pick --shell <zsh|pwsh>"))
+      (error "Usage: trampoline <items|pick>"))
+    (flush)
+    ;; babashka.process reads output on agent threads, which keep the JVM alive for a minute.
+    (shutdown-agents)))
+
+;; Run as a script by bb. The binary enters through `-main`.
+(when (= *file* (System/getProperty "babashka.file"))
+  (apply -main *command-line-args*))
