@@ -5,7 +5,7 @@ command -v tr_version > /dev/null && return
 
 ## Get the version.
 function tr_version {
-  echo '0.1.1-dev'
+  echo '0.2.0'
 }
 
 TR_PREFIX="${TR_PREFIX:-^t}"
