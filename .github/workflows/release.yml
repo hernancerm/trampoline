@@ -1,0 +1,203 @@
+name: Release
+
+run-name: Release ${{ inputs.version }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (MAJOR.MINOR.PATCH, no leading v)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+
+  prepare:
+    name: prepare
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ inputs.version }}
+      sha: ${{ steps.sha.outputs.sha }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Record the commit being released
+        id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+      - name: Reject an already released version
+        run: |
+          if git rev-parse -q --verify "refs/tags/${{ inputs.version }}" > /dev/null
+          then
+            echo "error: tag ${{ inputs.version }} already exists" >&2
+            exit 1
+          fi
+      - name: Set version and open the changelog section
+        run: .github/scripts/prepare-release.sh '${{ inputs.version }}'
+      # Nothing is committed or tagged until every binary exists, so a failed
+      # build leaves main and the tag list untouched and the workflow can just be
+      # re-run. The binary does not embed the version, so only the release job
+      # applies the patch.
+      - name: Save the release edit as a patch
+        run: git diff > release.patch
+      - name: Upload the patch
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-patch
+          path: release.patch
+          if-no-files-found: error
+
+  build:
+    name: build (${{ matrix.asset }})
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            asset: trampoline-macos-arm64
+          - os: ubuntu-24.04-arm
+            asset: trampoline-linux-arm64
+          - os: ubuntu-latest
+            asset: trampoline-linux-x86_64
+          - os: windows-latest
+            asset: trampoline-windows-x86_64
+    steps:
+      - name: Check out the commit being released
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+      - name: Cache Maven
+        uses: actions/cache@v6
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('deps.edn') }}
+          restore-keys: ${{ runner.os }}-maven-
+      - name: Install Native Image build dependencies
+        # Native Image links against the system toolchain and zlib, which the
+        # Linux runner images do not ship in full.
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y build-essential zlib1g-dev
+      - name: Install GraalVM and bb
+        # Versions from mise.toml.
+        uses: jdx/mise-action@v4
+      - name: Set up MSVC
+        # Native Image on Windows links with MSVC, which must be on PATH.
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+      - name: Build binary
+        run: bb bin
+      - name: Package binary
+        if: runner.os != 'Windows'
+        run: |
+          cp -v target/trampoline .
+          tar czf '${{ matrix.asset }}.tar.gz' trampoline
+          shasum -a 256 '${{ matrix.asset }}.tar.gz' > '${{ matrix.asset }}.tar.gz.sha256'
+      - name: Package binary (Windows)
+        if: runner.os == 'Windows'
+        env:
+          ASSET: ${{ matrix.asset }}
+        run: |
+          Copy-Item -Verbose target/trampoline.exe .
+          Compress-Archive -Path trampoline.exe -DestinationPath "$env:ASSET.zip"
+          $hash = (Get-FileHash -Algorithm SHA256 "$env:ASSET.zip").Hash.ToLower()
+          # Written by hand to match the `shasum` format and LF ending of the other assets.
+          [IO.File]::WriteAllText("$PWD/$env:ASSET.zip.sha256", "$hash  $env:ASSET.zip`n")
+      - name: Upload to the workflow
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}.*
+          if-no-files-found: error
+
+  release:
+    name: release
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+      # The binaries were built from prepare's commit. Releasing a main that has
+      # moved since would tag a tree nobody built.
+      - name: Reject a main that moved during the build
+        run: |
+          head="$(git rev-parse HEAD)"
+          if [[ "${head}" != '${{ needs.prepare.outputs.sha }}' ]]
+          then
+            echo "error: main moved from ${{ needs.prepare.outputs.sha }} to ${head}" >&2
+            exit 1
+          fi
+      - name: Download the patch
+        uses: actions/download-artifact@v8
+        with:
+          name: release-patch
+      - name: Apply the release version
+        run: git apply release.patch && rm release.patch
+      - name: Commit and tag
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add CHANGELOG.md trampoline.zsh
+          git commit -m "chore(release): ${VERSION}"
+          git tag "${VERSION}"
+          git push origin main
+          git push origin "${VERSION}"
+      - name: Download the binaries
+        uses: actions/download-artifact@v8
+        with:
+          pattern: trampoline-*
+          path: dist
+          merge-multiple: true
+      # Takes the newest version section, which is the one just prepared.
+      - name: Write the release notes
+        uses: ffurrer2/extract-release-notes@273da39a24fb7db106a35526c8162815faffd31d # v3.1.0
+        with:
+          release_notes_file: notes.md
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          gh release create "${VERSION}" \
+            --title "${VERSION}" \
+            --notes-file notes.md \
+            --verify-tag \
+            dist/*
+
+  next-snapshot:
+    name: next-snapshot
+    needs: [prepare, release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: main
+      - name: Bump to the next snapshot
+        run: .github/scripts/start-next-snapshot.sh '${{ needs.prepare.outputs.version }}'
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add trampoline.zsh
+          git commit -m 'chore: start next development iteration'
+          git push origin main
