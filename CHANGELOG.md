@@ -7,6 +7,14 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Rewrote the core in Go.
+
+### Removed
+
+- `TR_CMD`. The plugin always runs `trampoline` from `$PATH`.
+
 ## [0.2.0] - 2026-11-11
 
 ### Added

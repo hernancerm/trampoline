@@ -138,15 +138,12 @@ Explanation of the config file's syntax:
 
 ## Development
 
-To run [src/trampoline/core.clj](/src/trampoline/core.clj) from source with
-[babashka](https://babashka.org/) instead of the binary, set this before sourcing the
-plugin:
+Run the tests with `go test ./...`. To try a change, build the binary onto `$PATH`, ahead
+of any installed release:
 
-- Zsh: `TR_CMD=(bb ~/dev/repos/trampoline/src/trampoline/core.clj)`
-- PowerShell: `$TR_CMD = 'bb', "$HOME/dev/repos/trampoline/src/trampoline/core.clj"`
-
-The core must run on both bb and the JVM. `bb test` runs the tests on both. Build the
-binary with `bb bin`.
+```bash
+go build -o ~/.local/bin/trampoline .
+```
 
 ## Similar projects
 
