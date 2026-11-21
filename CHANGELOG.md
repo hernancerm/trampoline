@@ -7,13 +7,22 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `trampoline init <zsh|pwsh>`, which prints the shell setup to eval from `~/.zshrc` or
+  `$PROFILE`.
+- `trampoline --version`.
+
 ### Changed
 
 - Rewrote the core in Go.
 
 ### Removed
 
-- `TR_CMD`. The plugin always runs `trampoline` from `$PATH`.
+- The zsh plugin (`trampoline.plugin.zsh`) and the sourced PowerShell script. Replace the
+  Sheldon entry or the `source`/dot-source line with the `trampoline init` line from the
+  README.
+- `TR_CMD`. The shell setup always runs `trampoline` from `$PATH`.
 
 ## [0.2.0] - 2026-11-11
 

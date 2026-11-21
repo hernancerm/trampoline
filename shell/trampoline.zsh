@@ -1,12 +1,9 @@
-# Do not source this script multiple times.
-command -v tr_version > /dev/null && return
+# zsh layer of trampoline, printed by `trampoline init zsh`. Eval it from ~/.zshrc:
+#   eval "$(trampoline init zsh)"
+# No guard against a second eval: a `return` here would also end the ~/.zshrc evaling it, and
+# running it twice only rebinds the same widget.
 
 # CONFIGURATION
-
-## Get the version.
-function tr_version {
-  echo '0.2.1-dev'
-}
 
 TR_PREFIX="${TR_PREFIX:-^t}"
 TR_SET_KEYBINDS="${TR_SET_KEYBINDS:-1}"

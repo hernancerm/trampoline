@@ -1,6 +1,6 @@
-# PowerShell layer of trampoline. Dot-source it from $PROFILE:
-#   . ~/dev/repos/trampoline/pwsh/trampoline.ps1
-# Set $TR_SET_KEYBINDS = 0 before dot-sourcing to bind Invoke-TrJump yourself, and $TR_PREFIX to
+# PowerShell layer of trampoline, printed by `trampoline init pwsh`. Evaluate it from $PROFILE:
+#   trampoline init pwsh | Out-String | Invoke-Expression
+# Set $TR_SET_KEYBINDS = 0 before that to bind Invoke-TrJump yourself, and $TR_PREFIX to
 # change the key (PSReadLine chord syntax, see `Get-Help Set-PSReadLineKeyHandler`).
 
 # The listing, fzf and quoting live in the core, shared with the zsh layer.

@@ -1,8 +1,10 @@
-// Shell-independent core of trampoline. The shell layers (trampoline.zsh, pwsh/trampoline.ps1)
-// only bind a key, run the `trampoline` binary and execute the command it prints.
+// Shell-independent core of trampoline. The shell layers (shell/), printed by `init`, only bind
+// a key, run `trampoline pick` and execute the command it prints.
 //
 // Usage:
 //
+//	trampoline init <zsh|pwsh>       Print the shell layer, to eval from the shell's rc file.
+//	trampoline --version             Print the version.
 //	trampoline items [--type <d|f>]  Print the configured items, one per line, optionally only
 //	                                 the directories (d) or the files (f).
 //	trampoline pick --shell <shell>  Pick an item in fzf and print the command to run it, quoted
@@ -11,6 +13,7 @@
 package main
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
 	"os"
@@ -19,6 +22,16 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+)
+
+// Set by the release build with `-ldflags -X main.version=<version>`.
+var version = "dev"
+
+var (
+	//go:embed shell/trampoline.zsh
+	zshLayer string
+	//go:embed shell/trampoline.ps1
+	pwshLayer string
 )
 
 // item is one line of the picker. display keeps the line as written in the config (e.g.
@@ -198,10 +211,22 @@ func fail(msg string) {
 func main() {
 	args := append(os.Args[1:], "", "", "")
 	cmd, flag, value := args[0], args[1], args[2]
-	if !isFile(configFiles()[0]) && !isFile(configFiles()[1]) {
+	// Only listing needs a config, so `init` works in an rc file before the config exists.
+	if (cmd == "items" || cmd == "pick") && !isFile(configFiles()[0]) && !isFile(configFiles()[1]) {
 		fail("No config file found for trampoline, no ~/.trampoline or ~/.trampoline.local")
 	}
 	switch cmd {
+	case "--version":
+		fmt.Println(version)
+	case "init":
+		switch flag {
+		case "zsh":
+			fmt.Print(zshLayer)
+		case "pwsh":
+			fmt.Print(pwshLayer)
+		default:
+			fail("Usage: trampoline init <zsh|pwsh>")
+		}
 	case "items":
 		if flag != "" && !(flag == "--type" && (value == "d" || value == "f")) {
 			fail("Usage: trampoline items [--type <d|f>]")
@@ -219,6 +244,6 @@ func main() {
 			fail(err.Error())
 		}
 	default:
-		fail("Usage: trampoline <items|pick>")
+		fail("Usage: trampoline <init|items|pick|--version>")
 	}
 }

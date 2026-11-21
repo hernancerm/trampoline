@@ -8,18 +8,18 @@ zsh (or PowerShell) + [fzf](https://github.com/junegunn/fzf) for filesystem navi
 
 ## What is this?
 
-This is a zsh and PowerShell plugin to facilitate two use cases:
+This is a command for zsh and PowerShell to facilitate two use cases:
 
 1. `cd` to commonly visited directories.
 2. Open in `$EDITOR` commonly visited files.
 
-After sourcing the plugin this keybind is set:
+After the [shell setup](#shell-setup) this keybind is set:
 
 - <kbd>Ctrl-t</kbd> List [configured](#configuration-file) directories and files in fzf.
 
 ## Installation
 
-First, install [fzf](https://github.com/junegunn/fzf) and the `trampoline` binary. With
+Install [fzf](https://github.com/junegunn/fzf) and the `trampoline` binary. With
 [mise](https://mise.jdx.dev/):
 
 ```bash
@@ -29,80 +29,50 @@ mise use -g github:hernancerm/trampoline
 OR: Download it from [releases](https://github.com/hernancerm/trampoline/releases) and add
 to `$PATH`.
 
+## Shell setup
+
 ### Zsh
 
-With [Sheldon](https://github.com/rossmacarthur/sheldon) (Zsh plugin manager):
-
-```toml
-[plugins.trampoline]
-github = "hernancerm/trampoline"
-
-# File: ~/.config/sheldon/plugins.toml
-```
+Add to `~/.zshrc`:
 
 ```bash
-# Source plugins.
-eval "$(sheldon source)"
-
-# File: ~/.zshrc
+eval "$(trampoline init zsh)"
 ```
 
-Alternatively, if not using Sheldon:
+OR: If you want to set a custom keybind then use:
 
-1. Clone the trampoline repository by executing the below command:
+```bash
+TR_SET_KEYBINDS=0
+eval "$(trampoline init zsh)"
+bindkey "^t" tr-jump
+```
 
-    ```bash
-    git clone 'https://github.com/hernancerm/trampoline.git' \
-      "${HOME}/.local/share/trampoline"
-    ```
+OR: If you use [jeffreytse/zsh-vi-mode](https://github.com/jeffreytse/zsh-vi-mode):
 
-2. Source the plugin (also add the command to your `~/.zshrc` to enable on future
-   sessions):
-
-    ```bash
-    source "${HOME}/.local/share/trampoline/trampoline.plugin.zsh"
-    ```
-
-    OR: If you want to set a custom keybind then use:
-
-    ```bash
-    TR_SET_KEYBINDS=0
-    source "${HOME}/.local/share/trampoline/trampoline.plugin.zsh"
-    bindkey "^t" tr-jump
-    ```
-
-    OR: If you use [jeffreytse/zsh-vi-mode](https://github.com/jeffreytse/zsh-vi-mode):
-
-    ```bash
-    TR_SET_KEYBINDS=0
-    source "${HOME}/.local/share/trampoline/trampoline.plugin.zsh"
-    function zvm_after_init {
-      zvm_define_widget tr-jump
-      zvm_bindkey viins "^t" tr-jump
-    }
-    ```
+```bash
+TR_SET_KEYBINDS=0
+eval "$(trampoline init zsh)"
+function zvm_after_init {
+  zvm_define_widget tr-jump
+  zvm_bindkey viins "^t" tr-jump
+}
+```
 
 ### PowerShell
 
-1. Clone the trampoline repository by executing the below command:
+Add to `$PROFILE`:
 
-    ```powershell
-    git clone 'https://github.com/hernancerm/trampoline.git' "${HOME}/.local/share/trampoline"
-    ```
+```powershell
+trampoline init pwsh | Out-String | Invoke-Expression
+```
 
-2. Source the PowerShell layer from `$PROFILE`:
+OR: If you want to set a custom keybind then use:
 
-    ```powershell
-    . "${HOME}/.local/share/trampoline/pwsh/trampoline.ps1"
-    ```
-
-    OR: If you want to set a custom keybind then use:
-
-    ```powershell
-    $TR_SET_KEYBINDS = 0
-    . "${HOME}/.local/share/trampoline/pwsh/trampoline.ps1"
-    Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock { Invoke-TrJump }
-    ```
+```powershell
+$TR_SET_KEYBINDS = 0
+trampoline init pwsh | Out-String | Invoke-Expression
+Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock { Invoke-TrJump }
+```
 
 ## Configuration file
 

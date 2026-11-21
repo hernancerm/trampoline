@@ -50,6 +50,7 @@ jobs:
       - name: Build binaries
         env:
           CGO_ENABLED: '0'
+          VERSION: ${{ inputs.version }}
         run: |
           mkdir dist
           for target in darwin/arm64/macos-arm64 linux/arm64/linux-arm64 \
@@ -65,7 +66,7 @@ jobs:
               bin=trampoline
             fi
             GOOS="${goos}" GOARCH="${goarch}" \
-              go build -trimpath -ldflags='-s -w' -o "build-${name}/${bin}" .
+              go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o "build-${name}/${bin}" .
             if [[ "${goos}" == windows ]]
             then
               (cd "build-${name}" && zip -q "../dist/${asset}.zip" "${bin}")
@@ -82,12 +83,11 @@ jobs:
           name: binaries
           path: dist/*
           if-no-files-found: error
-      - name: Set version and open the changelog section
+      - name: Open the changelog section
         run: .github/scripts/prepare-release.sh '${{ inputs.version }}'
       # Nothing is committed or tagged until every binary exists, so a failed
       # build leaves main and the tag list untouched and the workflow can just be
-      # re-run. The binary does not embed the version, so only the release job
-      # applies the patch.
+      # re-run.
       - name: Save the release edit as a patch
         run: git diff > release.patch
       - name: Upload the patch
@@ -123,7 +123,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: release-patch
-      - name: Apply the release version
+      - name: Apply the changelog section
         run: git apply release.patch && rm release.patch
       - name: Commit and tag
         env:
@@ -131,7 +131,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add CHANGELOG.md trampoline.zsh
+          git add CHANGELOG.md
           git commit -m "chore(release): ${VERSION}"
           git tag "${VERSION}"
           git push origin main
@@ -156,24 +156,3 @@ jobs:
             --notes-file notes.md \
             --verify-tag \
             dist/*
-
-  next-snapshot:
-    name: next-snapshot
-    needs: [prepare, release]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Check out main
-        uses: actions/checkout@v7.0.1
-        with:
-          ref: main
-      - name: Bump to the next snapshot
-        run: .github/scripts/start-next-snapshot.sh '${{ needs.prepare.outputs.version }}'
-      - name: Commit
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add trampoline.zsh
-          git commit -m 'chore: start next development iteration'
-          git push origin main
