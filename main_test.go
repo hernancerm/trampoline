@@ -82,13 +82,18 @@ func TestSubDirs(t *testing.T) {
 func TestItems(t *testing.T) {
 	dir, subs := tree(t)
 	file := filepath.Join(dir, "f.txt")
-	t.Run("a dir lists its sub-dirs", func(t *testing.T) {
-		if got := paths(items([]string{dir})); !slices.Equal(subs, got) {
+	t.Run("a dir with /* lists its sub-dirs", func(t *testing.T) {
+		if got := paths(items([]string{dir + "/*"})); !slices.Equal(subs, got) {
 			t.Errorf("want %v, got %v", subs, got)
 		}
 	})
-	t.Run("a dir with :0 lists itself, displayed as written", func(t *testing.T) {
-		got := items([]string{dir + ":0"})
+	t.Run(`a dir with \* lists its sub-dirs`, func(t *testing.T) {
+		if got := paths(items([]string{dir + `\*`})); !slices.Equal(subs, got) {
+			t.Errorf("want %v, got %v", subs, got)
+		}
+	})
+	t.Run("a dir lists itself, displayed as written", func(t *testing.T) {
+		got := items([]string{dir})
 		if !slices.Equal([]item{{dir, dir}}, got) {
 			t.Errorf("got %v", got)
 		}
@@ -100,12 +105,13 @@ func TestItems(t *testing.T) {
 		}
 	})
 	t.Run("a missing path lists nothing", func(t *testing.T) {
-		if got := items([]string{filepath.Join(dir, "missing")}); len(got) != 0 {
+		missing := filepath.Join(dir, "missing")
+		if got := items([]string{missing, missing + "/*"}); len(got) != 0 {
 			t.Errorf("got %v", got)
 		}
 	})
 	t.Run("lines are listed in order", func(t *testing.T) {
-		got := paths(items([]string{file, dir + ":0"}))
+		got := paths(items([]string{file, dir}))
 		if !slices.Equal([]string{file, dir}, got) {
 			t.Errorf("got %v", got)
 		}

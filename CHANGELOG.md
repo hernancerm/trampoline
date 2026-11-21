@@ -16,6 +16,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - Rewrote the core in Go.
+- In the config, a directory lists itself. End it with `/*` to list its sub-dirs instead,
+  as a plain directory did before. The `:0` suffix is gone: drop it from those lines.
 
 ### Removed
 

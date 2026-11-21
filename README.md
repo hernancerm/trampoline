@@ -88,21 +88,19 @@ machine-specific dirs/files. Both files share the same syntax.
 Example contents of the config file:
 
 ```text
-~/dev/work
-~/dev/temp:0
-~/dev/Some Dir With Spaces:0
-~/dev/Another Dir With Spaces
+~/dev/work/*
+~/dev/temp
+~/dev/Some Dir With Spaces
+~/dev/Another Dir With Spaces/*
 ${HISTFILE}
-$HOME/foo/
+$HOME/foo/*
 ```
 
 Explanation of the config file's syntax:
 
-- Each line has the absolute path of one directory or one file.
-- By default, directories are expanded to their level-1 sub-dirs.
-- Directories may be suffixed with `:0` to list the dir itself instead of its level-1
-  sub-dirs.
-- Only a trailing `:0` is read as the suffix, so paths may contain a colon (`C:\Users`).
+- Each line has the absolute path of one directory or one file, listed as is.
+- A directory ending in `/*` lists its level-1 sub-dirs instead, hidden ones included.
+  On Windows `\*` works too.
 - The tilde (`~`) character is expanded to the user home directory.
 - Exported env variables are supported, as `$VAR` or `${VAR}`.
 

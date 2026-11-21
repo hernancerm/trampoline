@@ -129,17 +129,20 @@ func subDirs(dir string) []string {
 func items(lines []string) []item {
 	var out []item
 	for _, line := range lines {
-		// Only a trailing `:0` is the suffix, so a Windows drive (`C:\`) is not taken for one.
-		noExpand := strings.HasSuffix(line, ":0")
-		raw := strings.TrimSuffix(line, ":0")
-		path := filepath.Clean(expand(raw))
-		switch {
-		case isFile(path), isDir(path) && noExpand:
-			out = append(out, item{shorten(raw), path})
-		case isDir(path):
-			for _, d := range subDirs(path) {
-				out = append(out, item{shorten(d), d})
+		// A trailing `/*` (`\*` on Windows) lists the dir's sub-dirs, like a shell glob.
+		if parent, ok := strings.CutSuffix(line, "/*"); ok || strings.HasSuffix(line, `\*`) {
+			if !ok {
+				parent = strings.TrimSuffix(line, `\*`)
 			}
+			if path := filepath.Clean(expand(parent)); isDir(path) {
+				for _, d := range subDirs(path) {
+					out = append(out, item{shorten(d), d})
+				}
+			}
+			continue
+		}
+		if path := filepath.Clean(expand(line)); isFile(path) || isDir(path) {
+			out = append(out, item{shorten(line), path})
 		}
 	}
 	return out
